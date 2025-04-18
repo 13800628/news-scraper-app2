@@ -2,54 +2,49 @@ import streamlit as st
 from scraper.yahoo import fetch_yahoo_news
 from scraper.nhk import fetch_nhk_news
 
-# ニュースサイト選択
-st.title('ニューススクレイピング')
-option = st.selectbox("選択してください", ["ニュースサイトを選んで全てを表示", "キーワードで検索"])
+def get_news_data(source, keyword=None):
+    """
+    ニュースデータを取得する関数。
+    source: ニュースサイト (Yahoo, NHK)
+    keyword: 検索したいキーワード (オプション)
+    """
+    if source == "Yahoo":
+        return fetch_yahoo_news(keyword)
+    elif source == "NHK":
+        return fetch_nhk_news(keyword)
+    else:
+        return []
 
-if option == "ニュースサイトを選んで全てを表示":
-    site_option = st.selectbox("ニュースサイトを選んでください", ["Yahoo", "NHK"])
+def display_news(news_data):
+    """
+    ニュースデータを表示する関数
+    news_data: 取得したニュースデータ
+    """
+    if news_data:
+        for article in news_data:
+            st.write(f"**{article['title']}**")
+            st.write(article['link'])
+            st.write("###")
+    else:
+        st.warning("該当するニュースはありませんでした。")
 
-    # ユーザーが選んだサイトに基づいてニュースを取得する
-    if site_option == "Yahoo":
-        st.write("Yahoo!ニュースを選択しました")
-        news_data = fetch_yahoo_news()
-        st.write("全ての記事を表示しています:")
-        for news in news_data:
-            st.write(f"- {news['Title']} : {news['Link']}")
+def main():
+    st.title("ニューススクレイパー")
+    menu = ["ニュースサイト選択", "キーワードで検索"]
+    choice = st.sidebar.selectbox("メニューを選択してください", menu)
 
-    elif site_option == "NHK":
-        st.write("NHKニュースを選択しました")
-        news_data = fetch_nhk_news()
-        st.write("全ての記事を表示しています:")
-        for news in news_data:
-            st.write(f"- {news['Title']} : {news['Link']}")
-
-elif option == "キーワードで検索":
-    keyword = st.text_input("検索するキーワードを入力してください")
-
-    if keyword:
-        # Yahooでの検索
-        yahoo_news_data = fetch_yahoo_news()
-        filtered_yahoo = [news for news in yahoo_news_data if keyword.lower() in news['Title'].lower()]
+    if choice == "ニュースサイト選択":
+        site = st.selectbox("ニュースサイトを選択", ["Yahoo", "NHK"])
+        news_data = get_news_data(site)
+        display_news(news_data)
         
-        # NHKでの検索
-        nhk_news_data = fetch_nhk_news()
-        filtered_nhk = [news for news in nhk_news_data if keyword.lower() in news['Title'].lower()]
-
-        if filtered_yahoo or filtered_nhk:
-            st.write("キーワードにマッチする記事:")
-
-            # Yahooの結果を表示
-            if filtered_yahoo:
-                st.write("Yahoo!ニュース:")
-                for news in filtered_yahoo:
-                    st.write(f"- {news['Title']} : {news['Link']}")
-
-            # NHKの結果を表示
-            if filtered_nhk:
-                st.write("NHKニュース:")
-                for news in filtered_nhk:
-                    st.write(f"- {news['Title']} : {news['Link']}")
-
+    elif choice == "キーワードで検索":
+        keyword = st.text_input("検索したいキーワードを入力してください")
+        if keyword:
+            news_data = get_news_data("Yahoo", keyword) + get_news_data("NHK", keyword)
+            display_news(news_data)
         else:
-            st.write("キーワードにマッチする記事は見つかりませんでした。")
+            st.warning("キーワードを入力してください")
+
+if __name__ == "__main__":
+    main()
