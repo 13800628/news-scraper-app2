@@ -2,10 +2,6 @@ import requests
 from bs4 import BeautifulSoup
 
 def fetch_yahoo_news(keyword=None):
-    """
-    Yahooニュースをスクレイピングして取得する関数
-    keyword: 検索したいキーワード (オプション)
-    """
     url = f"https://news.yahoo.co.jp/" if not keyword else f"https://news.yahoo.co.jp/search?p={keyword}"
     
     try:
@@ -14,13 +10,22 @@ def fetch_yahoo_news(keyword=None):
         soup = BeautifulSoup(response.content, "html.parser")
         
         articles = []
-        for item in soup.find_all('li', class_='newsFeed_item'):
-            title = item.find('a').get_text()
-            link = item.find('a')['href']
-            articles.append({'title': title, 'link': link})
-        
+        # Yahooのトップページと検索結果の構造が異なるため分岐
+        if keyword:
+            for item in soup.select("div.sw-Card__contents"):  # 検索結果
+                title_tag = item.find('a')
+                if title_tag:
+                    title = title_tag.get_text(strip=True)
+                    link = title_tag['href']
+                    articles.append({'title': title, 'link': link})
+        else:
+            for item in soup.select("a.newsFeed_item_link"):  # トップページ
+                title = item.get_text(strip=True)
+                link = item['href']
+                articles.append({'title': title, 'link': link})
+
         return articles
-    
+
     except requests.RequestException as e:
         print(f"Error fetching Yahoo news: {e}")
         return []
