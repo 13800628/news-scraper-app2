@@ -23,28 +23,27 @@ def display_news(news_data):
     if news_data:
         for article in news_data:
             st.write(f"**{article['title']}**")
-            st.write(article['link'])
-            st.write("###")
+            st.write(f"[リンクはこちら]({article['link']})")
+            st.write("---")
     else:
         st.warning("該当するニュースはありませんでした。")
 
 def main():
     st.title("ニューススクレイパー")
     menu = ["ニュースサイト選択", "キーワードで検索"]
-    choice = st.sidebar.selectbox("メニューを選択してください", menu)
+    choice = st.sidebar.radio("メニューを選択してください", menu)
 
     if choice == "ニュースサイト選択":
         site = st.selectbox("ニュースサイトを選択", ["Yahoo", "NHK"])
-        news_data = get_news_data(site)
-        display_news(news_data)
+        if st.button("最新ニュースを取得"):
+            news_data = get_news_data(site)
+            display_news(news_data)
         
     elif choice == "キーワードで検索":
         keyword = st.text_input("検索したいキーワードを入力してください")
-        if keyword:
+        if st.button("検索"):
             news_data = get_news_data("Yahoo", keyword) + get_news_data("NHK", keyword)
             display_news(news_data)
-        else:
-            st.warning("キーワードを入力してください")
 
 if __name__ == "__main__":
     main()
